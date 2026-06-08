@@ -1,0 +1,17 @@
+{
+  "checkpoint": {
+    "phase": "sft",
+    "step": 1391
+  },
+  "max_seq_len": 1024,
+  "vocab_size": 16384,
+  "n_layers": 8,
+  "special_tokens": {
+    "system": "<|system|>",
+    "user": "<|user|>",
+    "assistant": "<|assistant|>",
+    "eom": "<|eom|>",
+    "eot": "<|eot|>"
+  },
+  "default_system_prompt": "You are a small helpful assistant. Be concise and honest."
+}

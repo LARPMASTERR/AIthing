@@ -16,7 +16,7 @@ def build(output: Path) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Build the static GitHub Pages demo")
+    parser = argparse.ArgumentParser(description="Build the browser-inference GitHub Pages site")
     parser.add_argument("--output", type=Path, default=Path("_site"))
     args = parser.parse_args()
     build(args.output)

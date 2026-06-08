@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { OrbitControls } from "./vendor/OrbitControls.js";
+import { BrowserModel } from "./browser-model.js";
 
 const canvas = document.querySelector("#brain");
 const space = document.querySelector("#space");
@@ -30,8 +31,8 @@ let currentAssistant;
 let promptLine;
 let answerLine;
 let siteConfig = { mode: "live" };
-let demoEvents;
-let replayCancelled = false;
+let browserModel;
+let browserStopped = false;
 const attentionLines = [];
 const paths = [];
 const activeNodes = new Set();
@@ -180,7 +181,7 @@ function addMessage(role, content) {
 function setBusy(busy) {
   document.querySelector("#send").disabled = busy;
   document.querySelector("#stop").disabled = !busy;
-  document.querySelector("#prompt").disabled = busy || siteConfig.mode === "demo";
+  document.querySelector("#prompt").disabled = busy;
 }
 
 function beginGeneration(userText) {
@@ -193,8 +194,8 @@ function beginGeneration(userText) {
   answerLine = createPath(answerColor);
   setBusy(true);
 
-  if (siteConfig.mode === "demo") {
-    replayDemo();
+  if (siteConfig.mode === "browser") {
+    runBrowserGeneration();
     return;
   }
 
@@ -219,16 +220,20 @@ function beginGeneration(userText) {
   });
 }
 
-async function replayDemo() {
-  replayCancelled = false;
-  demoEvents ||= await fetch("./data/demo-events.json").then((response) => response.json());
-  for (const event of demoEvents.events) {
-    if (replayCancelled) break;
-    handleEvent(event);
-    const delay = event.type === "prompt_token" ? 18 : event.type === "token" ? 115 : 0;
-    if (delay) await new Promise((resolve) => setTimeout(resolve, delay));
+async function runBrowserGeneration() {
+  browserStopped = false;
+  try {
+    const options = {
+      temperature: Number(document.querySelector("#temperature").value),
+      topP: Number(document.querySelector("#top-p").value),
+      maxTokens: Number(document.querySelector("#max-tokens").value),
+    };
+    for await (const event of browserModel.generate(conversation, options, () => browserStopped)) {
+      handleEvent(event);
+    }
+  } catch (error) {
+    handleEvent({ type: "error", message: error.message });
   }
-  setBusy(false);
 }
 
 function handleEvent(event) {
@@ -264,8 +269,12 @@ document.querySelector("#chat-form").addEventListener("submit", (event) => {
 });
 
 document.querySelector("#stop").addEventListener("click", () => {
-  replayCancelled = true;
+  browserStopped = true;
   if (socket) socket.close();
+  if (siteConfig.mode === "browser") {
+    document.querySelector("#stop").disabled = true;
+    return;
+  }
   if (currentAssistant && currentAssistant.textContent) {
     conversation.push({ role: "assistant", content: currentAssistant.textContent });
   }
@@ -322,8 +331,8 @@ function animate() {
 requestAnimationFrame(animate);
 
 async function loadLayout() {
-  const layoutUrl = siteConfig.mode === "demo"
-    ? "./data/layout.json"
+  const layoutUrl = siteConfig.mode === "browser"
+    ? siteConfig.layout_url
     : new URL("/visualizer/layout", siteConfig.backend_url || location.origin);
   const response = await fetch(layoutUrl);
   if (!response.ok) throw new Error(await response.text());
@@ -348,7 +357,13 @@ async function loadLayout() {
   points = new THREE.Points(geometry, material);
   scene.add(points);
   document.querySelector("#checkpoint").textContent = `${layout.checkpoint.phase} checkpoint / step ${layout.checkpoint.step}`;
-  document.querySelector("#loading").remove();
+  document.querySelector("#loading")?.remove();
+}
+
+function modeNote(text) {
+  const note = document.querySelector("#mode-note");
+  note.style.display = "block";
+  note.textContent = text;
 }
 
 async function start() {
@@ -358,19 +373,27 @@ async function start() {
   } catch {
     siteConfig = { mode: "live" };
   }
-  if (siteConfig.mode === "demo") {
-    const note = document.querySelector("#mode-note");
-    note.style.display = "block";
-    note.textContent = "Static GitHub Pages demo: replaying a recorded model trace. Run FastAPI locally for live prompts.";
-    const prompt = document.querySelector("#prompt");
-    prompt.value = siteConfig.demo_prompt;
-    prompt.disabled = true;
-    document.querySelector("#send").textContent = "Replay demo";
+  if (siteConfig.mode === "browser") {
+    setBusy(true);
     document.querySelector("#retrieval").disabled = true;
+    modeNote("Loading the trained model in your browser. The first visit downloads about 110 MB.");
+    const [, model] = await Promise.all([
+      loadLayout(),
+      BrowserModel.load(siteConfig, modeNote),
+    ]);
+    browserModel = model;
+    document.querySelector("#checkpoint").textContent =
+      `${model.config.checkpoint.phase} checkpoint / step ${model.config.checkpoint.step}`;
+    modeNote(`${model.config.execution_provider.toUpperCase()} browser inference ready. Wikipedia retrieval requires the local backend.`);
+    setBusy(false);
+    return;
   }
   await loadLayout();
 }
 
 start().catch((error) => {
-  document.querySelector("#loading").textContent = `Could not load constellation: ${error.message}`;
+  const loading = document.querySelector("#loading");
+  if (loading) loading.textContent = `Could not start visualizer: ${error.message}`;
+  else modeNote(`Could not start visualizer: ${error.message}`);
+  setBusy(false);
 });

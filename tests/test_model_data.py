@@ -54,6 +54,20 @@ def test_traced_forward_matches_logits_and_reports_signals():
     assert probabilities == sorted(probabilities, reverse=True)
 
 
+def test_browser_forward_matches_latest_logits_and_reports_signals():
+    torch.manual_seed(13)
+    model = TinyLM(tiny_model_config()).eval()
+    ids = torch.randint(0, 512, (1, 12))
+    normal, _ = model(ids)
+    logits, activity, attention = model.browser_forward(ids)
+    assert torch.equal(normal[:, -1, :], logits)
+    assert activity.shape == (model.config.n_layers,)
+    assert attention.shape == (model.config.n_layers, ids.shape[1])
+    assert torch.isfinite(activity).all()
+    assert torch.isfinite(attention).all()
+    assert torch.allclose(attention.sum(dim=-1), torch.ones(model.config.n_layers))
+
+
 def test_shards_masks_and_checkpoint(tmp_path):
     data_dir = tmp_path / "packed"
     writer = ShardWriter(data_dir, shard_tokens=32, with_mask=True)

@@ -92,12 +92,16 @@ When using the local virtual environment instead of Docker:
 Stop training before starting the visualizer, then open
 [http://localhost:8000](http://localhost:8000).
 
-## Publish The Static Demo
+## Publish The Browser App
 
-GitHub Pages can host static files, but it cannot run PyTorch, load the model
-checkpoint, or provide the WebSocket backend. The public Pages site therefore
-replays a recorded trace over a sanitized copy of the real token-embedding
-layout. The local FastAPI site remains the live, promptable version.
+The GitHub Pages build runs the trained SFT model directly in each visitor's
+browser with ONNX Runtime Web. It accepts live prompts and drives the same token
+constellation, layer activity, attention links, confidence, and alternatives as
+the local visualizer. WebGPU is used when available, with a slower WASM fallback.
+
+The first visit downloads about 110 MB of model and runtime files. GitHub Pages
+cannot run the Python retrieval code, so live Wikipedia retrieval remains
+available only through the local FastAPI app.
 
 The repository includes a GitHub Actions Pages workflow. Before pushing:
 
@@ -110,25 +114,27 @@ Open [http://localhost:8080](http://localhost:8080) to preview exactly what
 GitHub Pages will publish. Then create a GitHub repository, push this project to
 its `main` branch, and choose **GitHub Actions** as the Pages source in the
 repository's **Settings → Pages** screen. Every push to `main` will rebuild and
-deploy the demo.
+deploy the app.
 
 Large and private local files are excluded by `.gitignore`, including
 checkpoints, training datasets, virtual environments, caches, logs, and the
-generated `_site/` directory. The tracked `pages/data/` files contain only the
-sanitized public layout and recorded demo events.
+generated `_site/` directory. The browser-ready ONNX model, tokenizer, and
+constellation layout under `pages/` are intentionally tracked because GitHub
+Pages needs them.
 
-The frontend also supports a separately hosted live backend by changing
-`pages/site-config.json` to live mode and setting `backend_url`. When doing
-that, set `TINYLLM_ALLOWED_ORIGINS` on the backend to the exact Pages origin.
-Do not expose an unauthenticated GPU backend publicly without rate limiting.
-
-To replace the public replay after training a new model:
+To publish a newly trained checkpoint, export it and its cached visualizer
+layout, then rebuild:
 
 ```bash
-.venv/bin/python scripts/export_pages_demo.py \
-  --layout artifacts/visualizer/layout-REPLACE_ME.json \
-  --tokenizer artifacts/tokenizer.json
+.venv/bin/python scripts/export_browser_model.py \
+  --checkpoint artifacts/checkpoints/sft-latest.pt \
+  --tokenizer artifacts/tokenizer.json \
+  --layout artifacts/visualizer/layout-REPLACE_ME.json
+make pages
 ```
+
+Edit `pages/model/config.json` to change the public browser model's default
+system instruction.
 
 Then call the OpenAI-style, non-streaming endpoint:
 

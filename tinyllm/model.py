@@ -116,6 +116,19 @@ class TransformerBlock(nn.Module):
         activity = float(x[:, -1, :].float().pow(2).mean().sqrt().detach().cpu())
         return x, activity, targets
 
+    def browser_forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        normalized = self.attn_norm(x)
+        q, k, v = self.attention._project(normalized)
+        attention_output = F.scaled_dot_product_attention(q, k, v, is_causal=True)
+        x = x + self.attention._output(attention_output)
+        x = x + self.feed_forward(self.ffn_norm(x))
+        scores = torch.matmul(q[:, :, -1:, :].float(), k.float().transpose(-2, -1)) / math.sqrt(
+            self.attention.head_dim
+        )
+        attention = scores.softmax(dim=-1).mean(dim=(0, 1, 2))
+        activity = x[:, -1, :].float().pow(2).mean().sqrt()
+        return x, activity, attention
+
 
 class TinyLM(nn.Module):
     def __init__(self, config: ModelConfig):
@@ -168,6 +181,19 @@ class TinyLM(nn.Module):
             layer_activity.append(activity)
             attention_targets.append(targets)
         return self.lm_head(self.norm(x)), layer_activity, attention_targets
+
+    def browser_forward(self, input_ids: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        if input_ids.shape[1] > self.config.max_seq_len:
+            raise ValueError(f"sequence exceeds maximum length {self.config.max_seq_len}")
+        x = self.embedding(input_ids)
+        activity = []
+        attention = []
+        for layer in self.layers:
+            x, layer_activity, layer_attention = layer.browser_forward(x)
+            activity.append(layer_activity)
+            attention.append(layer_attention)
+        logits = self.lm_head(self.norm(x))[:, -1, :].float()
+        return logits, torch.stack(activity), torch.stack(attention)
 
     def parameter_count(self) -> int:
         return sum(parameter.numel() for parameter in self.parameters())

@@ -1,5 +1,7 @@
 {
-  "mode": "demo",
-  "backend_url": "",
-  "demo_prompt": "What is Linux? Name one Linux distribution."
+  "mode": "browser",
+  "layout_url": "./data/layout.json",
+  "model_url": "./model/tinyllm.onnx",
+  "tokenizer_url": "./model/tokenizer.json",
+  "model_config_url": "./model/config.json"
 }
