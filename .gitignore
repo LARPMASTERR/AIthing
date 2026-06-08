@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+.coverage
+htmlcov/
+build/
+dist/
+
+# Editors and operating systems
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+system_prompt.txt
+
+# Models, training data, and generated outputs
+/artifacts/
+/data/
+/checkpoints/
+/logs/
+/wandb/
+/runs/
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.bin
+*.npy
+*.npz
+*.parquet
+*.arrow
+
+# Frontend and GitHub Pages build output
+node_modules/
+_site/
+site/

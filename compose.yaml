@@ -1,0 +1,19 @@
+services:
+  tinyllm:
+    build: .
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+    environment:
+      HF_HOME: /workspace/data/huggingface
+      TOKENIZERS_PARALLELISM: "true"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    ports:
+      - "8000:8000"
+

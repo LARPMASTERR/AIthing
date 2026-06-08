@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tiny-convo-llm"
+version = "0.1.0"
+description = "A small from-scratch conversational language model for consumer GPUs"
+requires-python = ">=3.11,<3.15"
+dependencies = [
+    "datasets>=4.8,<5",
+    "fastapi>=0.115,<1",
+    "huggingface-hub>=0.27,<1",
+    "numpy>=2.0,<3",
+    "pydantic>=2.10,<3",
+    "requests>=2.32,<3",
+    "tokenizers>=0.21,<1",
+    "torch>=2.5,<3",
+    "uvicorn>=0.34,<1",
+]
+
+[project.optional-dependencies]
+dev = ["httpx>=0.28,<1", "pytest>=8.3,<9"]
+
+[project.scripts]
+tinyllm = "tinyllm.cli:main"
+tinyllm-api = "tinyllm.api:main"
+
+[tool.setuptools.packages.find]
+include = ["tinyllm*"]
+
+[tool.setuptools.package-data]
+tinyllm = ["static/**/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

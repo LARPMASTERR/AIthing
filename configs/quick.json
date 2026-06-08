@@ -1,0 +1,51 @@
+{
+  "model": {
+    "vocab_size": 16384,
+    "max_seq_len": 1024,
+    "n_layers": 8,
+    "d_model": 512,
+    "n_heads": 8,
+    "n_kv_heads": 4,
+    "d_ff": 1408,
+    "rope_theta": 10000.0
+  },
+  "data": {
+    "tokenizer_texts": 50000,
+    "pretrain_tokens": 120000000,
+    "sft_conversations": 30000,
+    "shard_tokens": 5000000,
+    "seed": 1337
+  },
+  "pretrain": {
+    "batch_size": 4,
+    "grad_accum_steps": 16,
+    "learning_rate": 0.0006,
+    "min_learning_rate": 0.00006,
+    "warmup_steps": 100,
+    "max_steps": 100000,
+    "max_seconds": 5400,
+    "save_every": 250,
+    "weight_decay": 0.1,
+    "grad_clip": 1.0
+  },
+  "sft": {
+    "batch_size": 2,
+    "grad_accum_steps": 16,
+    "learning_rate": 0.0001,
+    "min_learning_rate": 0.00001,
+    "warmup_steps": 20,
+    "max_steps": 10000,
+    "max_seconds": 900,
+    "save_every": 100,
+    "weight_decay": 0.1,
+    "grad_clip": 1.0
+  },
+  "paths": {
+    "tokenizer": "artifacts/tokenizer.json",
+    "pretrain_data": "data/packed/pretrain",
+    "sft_data": "data/packed/sft",
+    "checkpoints": "artifacts/checkpoints",
+    "system_prompt": "system_prompt.txt"
+  }
+}
+

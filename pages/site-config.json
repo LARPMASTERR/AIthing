@@ -1,0 +1,5 @@
+{
+  "mode": "demo",
+  "backend_url": "",
+  "demo_prompt": "What is Linux? Name one Linux distribution."
+}
