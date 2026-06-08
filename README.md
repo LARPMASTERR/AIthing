@@ -116,6 +116,11 @@ its `main` branch, and choose **GitHub Actions** as the Pages source in the
 repository's **Settings → Pages** screen. Every push to `main` will rebuild and
 deploy the app.
 
+Do not leave Pages set to **Deploy from a branch**. That mode runs a second
+Jekyll deployment which can overwrite the Actions deployment. A root-page
+fallback is included so branch mode still redirects to the browser app, but
+**GitHub Actions** is the intended source.
+
 Large and private local files are excluded by `.gitignore`, including
 checkpoints, training datasets, virtual environments, caches, logs, and the
 generated `_site/` directory. The browser-ready ONNX model, tokenizer, and

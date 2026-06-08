@@ -6,6 +6,14 @@ import sys
 from pathlib import Path
 
 
+def test_branch_pages_fallback_opens_browser_app():
+    root = Path(__file__).resolve().parents[1]
+    assert "tinyllm/static/index.html?config=../../site-config.json" in (root / "index.html").read_text()
+    config = json.loads((root / "site-config.json").read_text())
+    assert config["mode"] == "browser"
+    assert config["model_url"] == "../../pages/model/tinyllm.onnx"
+
+
 def test_pages_build_contains_browser_model_and_is_sanitized(tmp_path):
     output = tmp_path / "site"
     subprocess.run(
