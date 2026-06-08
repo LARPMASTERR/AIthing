@@ -368,8 +368,7 @@ function modeNote(text) {
 
 async function start() {
   try {
-    const configUrl = new URL(location.href).searchParams.get("config") || "./site-config.json";
-    const response = await fetch(configUrl);
+    const response = await fetch("./site-config.json");
     if (response.ok) siteConfig = await response.json();
   } catch {
     siteConfig = { mode: "live" };

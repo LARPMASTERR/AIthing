@@ -8,10 +8,12 @@ from pathlib import Path
 
 def test_branch_pages_fallback_opens_browser_app():
     root = Path(__file__).resolve().parents[1]
-    assert "tinyllm/static/index.html?config=../../site-config.json" in (root / "index.html").read_text()
+    html = (root / "index.html").read_text()
+    assert 'src="./tinyllm/static/app.js"' in html
+    assert 'href="./tinyllm/static/style.css"' in html
     config = json.loads((root / "site-config.json").read_text())
     assert config["mode"] == "browser"
-    assert config["model_url"] == "../../pages/model/tinyllm.onnx"
+    assert config["model_url"] == "./pages/model/tinyllm.onnx"
 
 
 def test_pages_build_contains_browser_model_and_is_sanitized(tmp_path):

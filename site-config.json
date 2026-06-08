@@ -1,7 +1,7 @@
 {
   "mode": "browser",
-  "layout_url": "../../pages/data/layout.json",
-  "model_url": "../../pages/model/tinyllm.onnx",
-  "tokenizer_url": "../../pages/model/tokenizer.json",
-  "model_config_url": "../../pages/model/config.json"
+  "layout_url": "./pages/data/layout.json",
+  "model_url": "./pages/model/tinyllm.onnx",
+  "tokenizer_url": "./pages/model/tokenizer.json",
+  "model_config_url": "./pages/model/config.json"
 }
